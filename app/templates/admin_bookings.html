@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="flex items-center justify-between">
+    <h1 class="text-xl font-semibold">预约查询</h1>
+    <a href="/admin" class="text-sm text-slate-600 underline">返回</a>
+  </div>
+
+  <form method="get" action="/admin/bookings" class="mt-4 space-y-3 rounded-xl border bg-white p-4">
+    <div>
+      <label class="text-sm text-slate-600">日期（可选）</label>
+      <input name="date" type="date" value="{{ date or '' }}" class="mt-1 w-full rounded-lg border bg-white px-3 py-2" />
+    </div>
+    <div>
+      <label class="text-sm text-slate-600">教练（可选）</label>
+      <select name="coach_id" class="mt-1 w-full rounded-lg border bg-white px-3 py-2">
+        <option value="">全部</option>
+        {% for c in coaches %}
+          <option value="{{ c.id }}" {% if coach_id and c.id == coach_id %}selected{% endif %}>{{ c.display_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="text-sm text-slate-600">状态（可选）</label>
+      <select name="status" class="mt-1 w-full rounded-lg border bg-white px-3 py-2">
+        <option value="">全部</option>
+        {% for st in [BookingStatus.pending, BookingStatus.confirmed, BookingStatus.rejected, BookingStatus.cancelled] %}
+          <option value="{{ st.value }}" {% if status and status == st.value %}selected{% endif %}>{{ st.value }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button class="w-full rounded-lg bg-slate-900 px-3 py-2 text-white">筛选</button>
+  </form>
+
+  <div class="mt-4 space-y-2">
+    {% if not items %}
+      <div class="rounded-xl border bg-white p-4 text-sm text-slate-700">暂无符合条件的预约</div>
+    {% endif %}
+    {% for it in items %}
+      <div class="rounded-xl border bg-white p-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-sm font-medium">{{ it.booking.date }} · {{ it.start_hm }} - {{ it.end_hm }}</div>
+            <div class="mt-1 text-xs text-slate-500">教练：{{ it.coach.display_name }} · 会员：{{ it.member.display_name }}</div>
+          </div>
+          <div class="text-xs text-slate-600">{{ it.booking.status.value }}</div>
+        </div>
+        {% if it.booking.decision_note %}
+          <div class="mt-2 text-xs text-slate-500">备注：{{ it.booking.decision_note }}</div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+{% endblock %}

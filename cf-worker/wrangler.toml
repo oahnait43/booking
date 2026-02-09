@@ -1,0 +1,10 @@
+name = "booking-worker"
+main = "src/index.ts"
+compatibility_date = "2026-02-09"
+
+kv_namespaces = [
+  { binding = "BOOKING_KV", id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID" }
+]
+
+[vars]
+COOKIE_SECURE = "false"

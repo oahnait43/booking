@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="flex items-center justify-between">
+    <h1 class="text-xl font-semibold">时间配置</h1>
+    <a href="/admin" class="text-sm text-slate-600 underline">返回</a>
+  </div>
+
+  {% if msg %}
+    <div class="mt-3 rounded-lg border bg-white p-3 text-sm text-slate-700">
+      {{ msg }}
+    </div>
+  {% endif %}
+
+  <form method="get" action="/admin/schedule" class="mt-4 space-y-3 rounded-xl border bg-white p-4">
+    <div>
+      <label class="text-sm text-slate-600">选择教练</label>
+      <select name="coach_id" class="mt-1 w-full rounded-lg border bg-white px-3 py-2">
+        {% for c in coaches %}
+          <option value="{{ c.id }}" {% if c.id == selected_coach_id %}selected{% endif %}>{{ c.display_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button class="w-full rounded-lg bg-slate-900 px-3 py-2 text-white">切换</button>
+  </form>
+
+  {% if not selected_coach_id %}
+    <div class="mt-4 rounded-xl border bg-white p-4 text-sm text-slate-700">请先创建教练账号</div>
+  {% endif %}
+
+  {% if selected_coach_id %}
+    <div class="mt-4 rounded-xl border bg-white p-4">
+      <div class="text-sm font-medium">添加每周规则</div>
+      <form method="post" action="/admin/schedule/rules/create" class="mt-3 space-y-3">
+        <input type="hidden" name="coach_id" value="{{ selected_coach_id }}" />
+        <div>
+          <label class="text-sm text-slate-600">星期</label>
+          <select name="weekday" class="mt-1 w-full rounded-lg border bg-white px-3 py-2">
+            {% for w in range(0, 7) %}
+              <option value="{{ w }}">{{ weekday_label(w) }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-sm text-slate-600">开始</label>
+            <input name="start_hm" value="08:00" class="mt-1 w-full rounded-lg border bg-white px-3 py-2" required />
+          </div>
+          <div>
+            <label class="text-sm text-slate-600">结束</label>
+            <input name="end_hm" value="20:00" class="mt-1 w-full rounded-lg border bg-white px-3 py-2" required />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-sm text-slate-600">单节分钟</label>
+            <input name="slot_minutes" type="number" value="60" class="mt-1 w-full rounded-lg border bg-white px-3 py-2" required />
+          </div>
+          <div>
+            <label class="text-sm text-slate-600">容量</label>
+            <input name="capacity" type="number" value="1" class="mt-1 w-full rounded-lg border bg-white px-3 py-2" required />
+          </div>
+        </div>
+        <label class="flex items-center gap-2 text-sm text-slate-700">
+          <input type="checkbox" name="enabled" />
+          启用
+        </label>
+        <button class="w-full rounded-lg bg-slate-900 px-3 py-2 text-white">添加规则</button>
+      </form>
+    </div>
+
+    <div class="mt-4 space-y-2">
+      {% for r in rules %}
+        <div class="rounded-xl border bg-white p-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-sm font-medium">{{ weekday_label(r.weekday) }} · {{ minute_to_hm(r.start_minute) }} - {{ minute_to_hm(r.end_minute) }}</div>
+              <div class="mt-1 text-xs text-slate-500">单节 {{ r.slot_minutes }} 分钟 · 容量 {{ r.capacity }} · {% if r.enabled %}启用{% else %}关闭{% endif %}</div>
+            </div>
+            <div class="flex gap-2">
+              <form method="post" action="/admin/schedule/rules/{{ r.id }}/toggle">
+                <input type="hidden" name="coach_id" value="{{ selected_coach_id }}" />
+                <button class="rounded-lg border px-3 py-2 text-sm">{% if r.enabled %}关闭{% else %}开启{% endif %}</button>
+              </form>
+              <form method="post" action="/admin/schedule/rules/{{ r.id }}/delete">
+                <input type="hidden" name="coach_id" value="{{ selected_coach_id }}" />
+                <button class="rounded-lg border px-3 py-2 text-sm">删除</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="mt-6 rounded-xl border bg-white p-4">
+      <div class="text-sm font-medium">添加日期例外</div>
+      <form method="post" action="/admin/schedule/exceptions/create" class="mt-3 space-y-3">
+        <input type="hidden" name="coach_id" value="{{ selected_coach_id }}" />
+        <div>
+          <label class="text-sm text-slate-600">日期</label>
+          <input name="date" type="date" class="mt-1 w-full rounded-lg border bg-white px-3 py-2" required />
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-sm text-slate-600">开始</label>
+            <input name="start_hm" value="08:00" class="mt-1 w-full rounded-lg border bg-white px-3 py-2" required />
+          </div>
+          <div>
+            <label class="text-sm text-slate-600">结束</label>
+            <input name="end_hm" value="20:00" class="mt-1 w-full rounded-lg border bg-white px-3 py-2" required />
+          </div>
+        </div>
+        <div>
+          <label class="text-sm text-slate-600">容量</label>
+          <input name="capacity" type="number" value="1" class="mt-1 w-full rounded-lg border bg-white px-3 py-2" required />
+        </div>
+        <label class="flex items-center gap-2 text-sm text-slate-700">
+          <input type="checkbox" name="enabled" />
+          启用
+        </label>
+        <button class="w-full rounded-lg bg-slate-900 px-3 py-2 text-white">添加例外</button>
+      </form>
+    </div>
+
+    <div class="mt-4 space-y-2">
+      {% for ex in exceptions %}
+        <div class="rounded-xl border bg-white p-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-sm font-medium">{{ ex.date }} · {{ minute_to_hm(ex.start_minute) }} - {{ minute_to_hm(ex.end_minute) }}</div>
+              <div class="mt-1 text-xs text-slate-500">容量 {{ ex.capacity }} · {% if ex.enabled %}启用{% else %}关闭{% endif %}</div>
+            </div>
+            <div class="flex gap-2">
+              <form method="post" action="/admin/schedule/exceptions/{{ ex.id }}/toggle">
+                <input type="hidden" name="coach_id" value="{{ selected_coach_id }}" />
+                <button class="rounded-lg border px-3 py-2 text-sm">{% if ex.enabled %}关闭{% else %}开启{% endif %}</button>
+              </form>
+              <form method="post" action="/admin/schedule/exceptions/{{ ex.id }}/delete">
+                <input type="hidden" name="coach_id" value="{{ selected_coach_id }}" />
+                <button class="rounded-lg border px-3 py-2 text-sm">删除</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endblock %}
