@@ -22,8 +22,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: npm
-          cache-dependency-path: cf-worker/package.json
 
       - name: Validate Cloudflare secrets
         env:
@@ -51,60 +49,20 @@ jobs:
           cat wrangler.toml
 
       - name: Wrangler whoami (preflight)
-        id: whoami
-        uses: cloudflare/wrangler-action@v3
-        continue-on-error: true
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: cf-worker
-          wranglerVersion: "4.63.0"
-          command: whoami
-
-      - name: Print whoami logs
-        if: ${{ always() }}
-        env:
-          STDOUT: ${{ steps.whoami.outputs.command-output }}
-          STDERR: ${{ steps.whoami.outputs.command-stderr }}
-        run: |
-          echo "=== whoami stdout ==="
-          echo "$STDOUT"
-          echo "=== whoami stderr ==="
-          echo "$STDERR"
+        working-directory: cf-worker
+        run: npx --yes wrangler@4.63.0 whoami
 
       - name: Deploy
-        id: deploy
-        uses: cloudflare/wrangler-action@v3
-        continue-on-error: true
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: cf-worker
-          wranglerVersion: "4.63.0"
-          command: deploy --log-level debug
-
-      - name: Print wrangler logs
-        if: ${{ always() }}
-        env:
-          STDOUT: ${{ steps.deploy.outputs.command-output }}
-          STDERR: ${{ steps.deploy.outputs.command-stderr }}
-          DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment-url }}
-        run: |
-          echo "=== deployment-url ==="
-          echo "$DEPLOYMENT_URL"
-          echo "=== wrangler stdout ==="
-          echo "$STDOUT"
-          echo "=== wrangler stderr ==="
-          echo "$STDERR"
+        working-directory: cf-worker
+        run: npx --yes wrangler@4.63.0 deploy --log-level debug
 
       - name: Configure Worker secrets (required)
-        if: ${{ steps.deploy.outcome == 'success' }}
         working-directory: cf-worker
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -118,15 +76,11 @@ jobs:
             exit 1
           fi
 
-          echo -n "$WORKER_SECRET_KEY" | npx wrangler secret put SECRET_KEY --name booking-worker
+          echo -n "$WORKER_SECRET_KEY" | npx --yes wrangler@4.63.0 secret put SECRET_KEY --name booking-worker
 
           if [ -n "$BOOTSTRAP_ADMIN_USERNAME" ]; then
-            echo -n "$BOOTSTRAP_ADMIN_USERNAME" | npx wrangler secret put BOOTSTRAP_ADMIN_USERNAME --name booking-worker
+            echo -n "$BOOTSTRAP_ADMIN_USERNAME" | npx --yes wrangler@4.63.0 secret put BOOTSTRAP_ADMIN_USERNAME --name booking-worker
           fi
           if [ -n "$BOOTSTRAP_ADMIN_PASSWORD" ]; then
-            echo -n "$BOOTSTRAP_ADMIN_PASSWORD" | npx wrangler secret put BOOTSTRAP_ADMIN_PASSWORD --name booking-worker
+            echo -n "$BOOTSTRAP_ADMIN_PASSWORD" | npx --yes wrangler@4.63.0 secret put BOOTSTRAP_ADMIN_PASSWORD --name booking-worker
           fi
-
-      - name: Fail if deploy failed
-        if: ${{ steps.deploy.outcome != 'success' }}
-        run: exit 1
