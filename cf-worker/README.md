@@ -75,12 +75,10 @@ npm run deploy
 
 - `CLOUDFLARE_API_TOKEN`：Cloudflare API Token（需要 Workers + KV 的权限）
 - `CLOUDFLARE_ACCOUNT_ID`：Cloudflare Account ID
+- `WORKER_SECRET_KEY`：写入到 Worker 的 `SECRET_KEY`（必填，随机长字符串）
+- （可选）`BOOTSTRAP_ADMIN_USERNAME` / `BOOTSTRAP_ADMIN_PASSWORD`：首次启动自动创建管理员账号
 
-然后在 Cloudflare Dashboard 的 Worker 设置里配置运行时变量/密钥（推荐在 Dashboard 配，不要放进 GitHub Secret）：
-
-- `SECRET_KEY`（必填）
-- `BOOTSTRAP_ADMIN_USERNAME` / `BOOTSTRAP_ADMIN_PASSWORD`（可选）
-- `COOKIE_SECURE`（生产建议 true）
+首次部署前 Cloudflare Dashboard 里可能还看不到 Worker（因为还没创建）。GitHub Actions 第一次 `deploy` 成功后会自动创建 Worker，然后你再去 Dashboard 里设置非敏感变量即可（例如 `COOKIE_SECURE=true`）。
 
 ### 重要说明（KV 一致性）
 

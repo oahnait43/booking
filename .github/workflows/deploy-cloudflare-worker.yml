@@ -29,6 +29,29 @@ jobs:
         working-directory: cf-worker
         run: npm install
 
+      - name: Configure Worker secrets (required)
+        working-directory: cf-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          WORKER_SECRET_KEY: ${{ secrets.WORKER_SECRET_KEY }}
+          BOOTSTRAP_ADMIN_USERNAME: ${{ secrets.BOOTSTRAP_ADMIN_USERNAME }}
+          BOOTSTRAP_ADMIN_PASSWORD: ${{ secrets.BOOTSTRAP_ADMIN_PASSWORD }}
+        run: |
+          if [ -z "$WORKER_SECRET_KEY" ]; then
+            echo "Missing GitHub secret: WORKER_SECRET_KEY"
+            exit 1
+          fi
+
+          echo -n "$WORKER_SECRET_KEY" | npx wrangler secret put SECRET_KEY --name booking-worker
+
+          if [ -n "$BOOTSTRAP_ADMIN_USERNAME" ]; then
+            echo -n "$BOOTSTRAP_ADMIN_USERNAME" | npx wrangler secret put BOOTSTRAP_ADMIN_USERNAME --name booking-worker
+          fi
+          if [ -n "$BOOTSTRAP_ADMIN_PASSWORD" ]; then
+            echo -n "$BOOTSTRAP_ADMIN_PASSWORD" | npx wrangler secret put BOOTSTRAP_ADMIN_PASSWORD --name booking-worker
+          fi
+
       - name: Deploy
         uses: cloudflare/wrangler-action@v3
         with:
