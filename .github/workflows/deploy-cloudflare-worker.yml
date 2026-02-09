@@ -25,19 +25,33 @@ jobs:
           cache: npm
           cache-dependency-path: cf-worker/package.json
 
-      - name: Install deps
-        working-directory: cf-worker
-        run: npm install
-
       - name: Deploy
+        id: deploy
         uses: cloudflare/wrangler-action@v3
+        continue-on-error: true
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: cf-worker
+          wranglerVersion: "3.109.0"
           command: deploy
 
+      - name: Print wrangler logs
+        if: ${{ always() }}
+        env:
+          STDOUT: ${{ steps.deploy.outputs.command-output }}
+          STDERR: ${{ steps.deploy.outputs.command-stderr }}
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment-url }}
+        run: |
+          echo "=== deployment-url ==="
+          echo "$DEPLOYMENT_URL"
+          echo "=== wrangler stdout ==="
+          echo "$STDOUT"
+          echo "=== wrangler stderr ==="
+          echo "$STDERR"
+
       - name: Configure Worker secrets (required)
+        if: ${{ steps.deploy.outcome == 'success' }}
         working-directory: cf-worker
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -59,3 +73,7 @@ jobs:
           if [ -n "$BOOTSTRAP_ADMIN_PASSWORD" ]; then
             echo -n "$BOOTSTRAP_ADMIN_PASSWORD" | npx wrangler secret put BOOTSTRAP_ADMIN_PASSWORD --name booking-worker
           fi
+
+      - name: Fail if deploy failed
+        if: ${{ steps.deploy.outcome != 'success' }}
+        run: exit 1
