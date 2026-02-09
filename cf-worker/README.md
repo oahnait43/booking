@@ -15,6 +15,14 @@ wrangler kv namespace create BOOKING_KV
 
 把输出里的 `id` 填到 [wrangler.toml](file:///Users/BONNIE3T/Desktop/booking/cf-worker/wrangler.toml) 的 `kv_namespaces` 中。
 
+如果你还要本地 `wrangler dev` 预览，再创建一个 preview namespace：
+
+```bash
+wrangler kv namespace create BOOKING_KV --preview
+```
+
+把输出的 preview `id` 填到 `preview_id`。
+
 ### 2) 配置环境变量
 
 至少需要：
@@ -56,6 +64,21 @@ npm run dev
 cd cf-worker
 npm run deploy
 ```
+
+### 从 GitHub 自动部署（GitHub Actions）
+
+仓库已包含部署工作流：[deploy-cloudflare-worker.yml](file:///Users/BONNIE3T/Desktop/booking/.github/workflows/deploy-cloudflare-worker.yml)。
+
+你需要在 GitHub 仓库 Settings -> Secrets and variables -> Actions 里添加：
+
+- `CLOUDFLARE_API_TOKEN`：Cloudflare API Token（需要 Workers + KV 的权限）
+- `CLOUDFLARE_ACCOUNT_ID`：Cloudflare Account ID
+
+然后在 Cloudflare Dashboard 的 Worker 设置里配置运行时变量/密钥（推荐在 Dashboard 配，不要放进 GitHub Secret）：
+
+- `SECRET_KEY`（必填）
+- `BOOTSTRAP_ADMIN_USERNAME` / `BOOTSTRAP_ADMIN_PASSWORD`（可选）
+- `COOKIE_SECURE`（生产建议 true）
 
 ### 重要说明（KV 一致性）
 
