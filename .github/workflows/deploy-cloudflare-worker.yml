@@ -29,6 +29,14 @@ jobs:
         working-directory: cf-worker
         run: npm install
 
+      - name: Deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: cf-worker
+          command: deploy
+
       - name: Configure Worker secrets (required)
         working-directory: cf-worker
         env:
@@ -51,11 +59,3 @@ jobs:
           if [ -n "$BOOTSTRAP_ADMIN_PASSWORD" ]; then
             echo -n "$BOOTSTRAP_ADMIN_PASSWORD" | npx wrangler secret put BOOTSTRAP_ADMIN_PASSWORD --name booking-worker
           fi
-
-      - name: Deploy
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: cf-worker
-          command: deploy
