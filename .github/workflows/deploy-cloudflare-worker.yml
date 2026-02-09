@@ -87,7 +87,7 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: cf-worker
           wranglerVersion: "4.63.0"
-          command: deploy
+          command: deploy --log-level debug
 
       - name: Print wrangler logs
         if: ${{ always() }}
