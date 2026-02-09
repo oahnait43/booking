@@ -23,6 +23,8 @@ wrangler kv namespace create BOOKING_KV --preview
 
 把输出的 preview `id` 填到 `preview_id`。
 
+如果你暂时不需要 preview，也可以先把 `preview_id` 填成和生产 `id` 一样，保证配置有效、GitHub Actions 部署不会因为占位符报错。
+
 ### 2) 配置环境变量
 
 至少需要：
