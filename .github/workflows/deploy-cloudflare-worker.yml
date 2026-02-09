@@ -25,6 +25,34 @@ jobs:
           cache: npm
           cache-dependency-path: cf-worker/package.json
 
+      - name: Show wrangler.toml
+        working-directory: cf-worker
+        run: |
+          echo "=== cf-worker/wrangler.toml ==="
+          cat wrangler.toml
+
+      - name: Wrangler whoami (preflight)
+        id: whoami
+        uses: cloudflare/wrangler-action@v3
+        continue-on-error: true
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: cf-worker
+          wranglerVersion: "3.109.0"
+          command: whoami
+
+      - name: Print whoami logs
+        if: ${{ always() }}
+        env:
+          STDOUT: ${{ steps.whoami.outputs.command-output }}
+          STDERR: ${{ steps.whoami.outputs.command-stderr }}
+        run: |
+          echo "=== whoami stdout ==="
+          echo "$STDOUT"
+          echo "=== whoami stderr ==="
+          echo "$STDERR"
+
       - name: Deploy
         id: deploy
         uses: cloudflare/wrangler-action@v3
