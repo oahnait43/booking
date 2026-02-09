@@ -1,5 +1,11 @@
 import type { Env } from "./types";
 
+function asArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  const out = new Uint8Array(new ArrayBuffer(bytes.byteLength));
+  out.set(bytes);
+  return out.buffer;
+}
+
 function b64uEncode(input: ArrayBuffer | Uint8Array): string {
   const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
   const bin = String.fromCharCode(...bytes);
@@ -7,12 +13,12 @@ function b64uEncode(input: ArrayBuffer | Uint8Array): string {
   return b64.replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
 }
 
-function b64uDecodeToBytes(value: string): Uint8Array {
+function b64uDecodeToBytes(value: string): Uint8Array<ArrayBuffer> {
   const normalized = value.replaceAll("-", "+").replaceAll("_", "/");
   const padLen = (4 - (normalized.length % 4)) % 4;
   const b64 = normalized + "=".repeat(padLen);
   const bin = atob(b64);
-  const bytes = new Uint8Array(bin.length);
+  const bytes = new Uint8Array(new ArrayBuffer(bin.length));
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
   return bytes;
 }
@@ -34,10 +40,11 @@ export async function verifySession<T>(env: Env, token: string): Promise<T | nul
   if (parts.length !== 2) return null;
   const [body, signature] = parts;
   const key = await hmacKey(env.SECRET_KEY);
+  const sigBytes = b64uDecodeToBytes(signature);
   const ok = await crypto.subtle.verify(
     "HMAC",
     key,
-    b64uDecodeToBytes(signature),
+    asArrayBuffer(sigBytes),
     new TextEncoder().encode(body),
   );
   if (!ok) return null;
@@ -71,7 +78,7 @@ export async function verifyPassword(password: string, passwordHash: string): Pr
   const salt = b64uDecodeToBytes(saltB64);
   const key = await pbkdf2Key(password);
   const bits = await crypto.subtle.deriveBits(
-    { name: "PBKDF2", hash: "SHA-256", salt, iterations },
+    { name: "PBKDF2", hash: "SHA-256", salt: asArrayBuffer(salt), iterations },
     key,
     256,
   );

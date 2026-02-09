@@ -75,6 +75,8 @@ export async function readForm(req: Request): Promise<Record<string, string>> {
   }
   const data = await req.formData();
   const out: Record<string, string> = {};
-  for (const [k, v] of data.entries()) out[k] = String(v);
+  data.forEach((v, k) => {
+    out[k] = String(v);
+  });
   return out;
 }

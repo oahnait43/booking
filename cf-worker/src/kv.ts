@@ -41,7 +41,7 @@ export async function kvListByPrefix(
   const keysOut: string[] = [];
   let cursor: string | undefined = undefined;
   for (;;) {
-    const result = await kv.list({ prefix, cursor });
+    const result: Awaited<ReturnType<KVNamespace["list"]>> = await kv.list({ prefix, cursor });
     for (const k of result.keys) keysOut.push(k.name);
     if (result.list_complete) break;
     cursor = result.cursor;
